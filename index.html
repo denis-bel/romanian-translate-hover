@@ -171,6 +171,7 @@
         <div class="toolbar">
           <span class="chip">Input JSON</span>
           <span class="spacer"></span>
+          <button id="copyBtn" type="button" title="Copy input JSON">Copy</button>
           <button id="renderBtn" type="button" title="Render the text">Render</button>
         </div>
         <textarea id="jsonInput" spellcheck="false" aria-label="JSON input"></textarea>
@@ -199,6 +200,7 @@
     const errorEl = document.getElementById('errorBox');
     const renderBtn = document.getElementById('renderBtn');
     const toggleTipsBtn = document.getElementById('toggleTipsBtn');
+    const copyBtn = document.getElementById('copyBtn');
 
     // Starter example
     const example = [
@@ -213,8 +215,8 @@
     ];
     inputEl.value = JSON.stringify(example, null, 2);
 
-    const NO_SPACE_BEFORE = /^[\.,!?;:\)\]\}…%]$/;    // punctuation that sticks to previous
-    const NO_SPACE_AFTER  = /^[\(\[\{„“"«]$/;          // opening punctuation that sticks to next
+    const NO_SPACE_BEFORE = /^[\.,!?;:\)\]\}…%]$/;
+    const NO_SPACE_AFTER  = /^[\(\[\{„“"«]$/;
 
     function clearError() {
       errorEl.textContent = '';
@@ -232,13 +234,16 @@
       const t = (translation ?? '').trim();
       if (t) {
         span.dataset.translation = t;
-        span.title = t; // fallback tooltip
+        span.setAttribute('aria-label', t);
       }
-      // Mobile: tap toggles tooltip state
-      span.addEventListener('click', (e) => {
-        // Don’t toggle if there’s no translation
+      span.addEventListener('pointerdown', (e) => {
         if (!span.dataset.translation) return;
+        if (e.pointerType === 'mouse') return;
         span.classList.toggle('show-tip');
+        e.stopPropagation();
+      });
+      span.addEventListener('mouseleave', () => {
+        span.classList.remove('show-tip');
       });
       return span;
     }
@@ -266,21 +271,13 @@
         if (item.translation !== undefined && typeof item.translation !== 'string') {
           return showError(`Item ${idx + 1} has "translation" that is not a string.`);
         }
-
         const token = item.original;
         const span = makeWordSpan(token, item.translation);
-
-        // spacing logic
         const isPunct = NO_SPACE_BEFORE.test(token);
         const isOpen  = NO_SPACE_AFTER.test(token);
-
-        const needSpace =
-          idx !== 0 && !isPunct && !prevNeedsNoSpaceAfter;
-
+        const needSpace = idx !== 0 && !isPunct && !prevNeedsNoSpaceAfter;
         if (needSpace) outEl.append(' ');
         outEl.appendChild(span);
-
-        // if current is opening punctuation, suppress next leading space
         prevNeedsNoSpaceAfter = isOpen;
       });
     }
@@ -291,10 +288,34 @@
       words.forEach(w => w.classList.toggle('show-tip', !anyOpen));
     }
 
+    // Copy JSON to clipboard
+    function copyJson() {
+      navigator.clipboard.writeText(inputEl.value).then(() => {
+        const old = copyBtn.textContent;
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => { copyBtn.textContent = old; }, 1200);
+      }).catch(() => {
+        alert("Failed to copy");
+      });
+    }
+
     renderBtn.addEventListener('click', render);
     toggleTipsBtn.addEventListener('click', toggleAllTips);
+    copyBtn.addEventListener('click', copyJson);
 
-    // Render once on load
+    // Close tips if clicking outside
+    document.addEventListener('pointerdown', (e) => {
+      if (e.target.closest && e.target.closest('.word')) return;
+      outEl.querySelectorAll('.word.show-tip').forEach(w => w.classList.remove('show-tip'));
+    });
+
+    // Close tips on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        outEl.querySelectorAll('.word.show-tip').forEach(w => w.classList.remove('show-tip'));
+      }
+    });
+
     render();
   </script>
 </body>
