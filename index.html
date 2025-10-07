@@ -171,6 +171,7 @@
         <div class="toolbar">
           <span class="chip">Input JSON</span>
           <span class="spacer"></span>
+          <button id="clearBtn" type="button" title="Clear input JSON">Clear</button>
           <button id="copyBtn" type="button" title="Copy input JSON">Copy</button>
           <button id="renderBtn" type="button" title="Render the text">Render</button>
         </div>
@@ -201,6 +202,7 @@
     const renderBtn = document.getElementById('renderBtn');
     const toggleTipsBtn = document.getElementById('toggleTipsBtn');
     const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
 
     // Starter example
     const example = [
@@ -299,9 +301,17 @@
       });
     }
 
+    // Clear JSON input/output
+    function clearJson() {
+      inputEl.value = "";
+      outEl.replaceChildren();
+      clearError();
+    }
+
     renderBtn.addEventListener('click', render);
     toggleTipsBtn.addEventListener('click', toggleAllTips);
     copyBtn.addEventListener('click', copyJson);
+    clearBtn.addEventListener('click', clearJson);
 
     // Close tips if clicking outside
     document.addEventListener('pointerdown', (e) => {
