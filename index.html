@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Romanian Hover-Translate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #151a2d;
+      --ink: #eaeefb;
+      --muted: #a7b0d4;
+      --accent: #6ea8fe;
+      --danger: #ff6b6b;
+      --ring: rgba(110,168,254,.35);
+      --radius: 14px;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 80% -10%, #1a2150 0%, #0b1020 60%) fixed;
+      color: var(--ink);
+      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      display: grid;
+      place-items: start center;
+      padding: 28px 16px 56px;
+    }
+    .wrap {
+      width: min(100%, 980px);
+      display: grid;
+      gap: 18px;
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 28px;
+      letter-spacing: .2px;
+    }
+    .sub { color: var(--muted); margin-top: -6px; }
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+    .panel {
+      background: color-mix(in oklab, var(--panel), black 10%);
+      border: 1px solid color-mix(in oklab, var(--panel), white 8%);
+      border-radius: var(--radius);
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.04);
+      overflow: clip;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02));
+    }
+    .toolbar .spacer { flex: 1; }
+    button, .chip {
+      appearance: none;
+      border: 1px solid color-mix(in oklab, var(--accent), black 30%);
+      background: linear-gradient(180deg, color-mix(in oklab, var(--accent), black 45%), color-mix(in oklab, var(--accent), black 60%));
+      color: white;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 6px 20px var(--ring);
+      transition: transform .05s ease, box-shadow .15s ease, filter .15s ease;
+    }
+    button:hover { filter: brightness(1.05); }
+    button:active { transform: translateY(1px); box-shadow: 0 3px 12px var(--ring); }
+    .chip {
+      border-color: rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      box-shadow: none;
+      cursor: default;
+    }
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      display: block;
+      resize: vertical;
+      padding: 14px 14px;
+      border: none;
+      outline: none;
+      color: var(--ink);
+      background: transparent;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .out {
+      padding: 18px;
+      font-size: 22px;
+      line-height: 1.75;
+      min-height: 110px;
+    }
+
+    /* Word/tooltip styling */
+    .word {
+      position: relative;
+      display: inline-block;
+      padding: 0 .08em;
+      border-radius: .35em;
+      transition: background-color .12s ease, box-shadow .12s ease;
+    }
+    .word[data-translation]:hover,
+    .word.show-tip {
+      background: rgba(110,168,254,.12);
+      box-shadow: 0 0 0 2px rgba(110,168,254,.18);
+    }
+    .word[data-translation]::after {
+      content: attr(data-translation);
+      position: absolute;
+      inset: auto auto calc(100% + 10px) 50%;
+      translate: -50% 0;
+      background: #0a0f24;
+      color: var(--ink);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 14px;
+      line-height: 1.25;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity .12s ease, transform .12s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      z-index: 2;
+    }
+    .word[data-translation]:hover::after,
+    .word.show-tip::after { opacity: 1; transform: translateY(0); }
+
+    /* Error box */
+    .error {
+      padding: 10px 12px;
+      color: #fff;
+      background: color-mix(in oklab, var(--danger), black 20%);
+      border-top: 1px solid color-mix(in oklab, var(--danger), white 10%);
+      font-size: 14px;
+      display: none;
+    }
+    .error.show { display: block; }
+
+    /* Layout helpers */
+    .io { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 900px) {
+      .io { grid-template-columns: 1fr 1fr; }
+    }
+    .muted { color: var(--muted); font-size: 13px; }
+    .footer {
+      text-align: center; color: var(--muted); font-size: 13px; margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div>
+      <h1>Hover-Translate for Romanian</h1>
+      <p class="sub">Paste JSON pairs of <code>original</code> and <code>translation</code>. Hover (or tap) words to see the meaning.</p>
+    </div>
+
+    <div class="io">
+      <!-- INPUT -->
+      <div class="panel">
+        <div class="toolbar">
+          <span class="chip">Input JSON</span>
+          <span class="spacer"></span>
+          <button id="renderBtn" type="button" title="Render the text">Render</button>
+        </div>
+        <textarea id="jsonInput" spellcheck="false" aria-label="JSON input"></textarea>
+        <div id="errorBox" class="error"></div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="panel">
+        <div class="toolbar">
+          <span class="chip">Output</span>
+          <span class="spacer"></span>
+          <button id="toggleTipsBtn" type="button" title="Toggle all tooltips">Toggle tips</button>
+        </div>
+        <div id="output" class="out" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div class="footer muted">
+      Tip: punctuation items (like <code>.</code>, <code>,</code>, <code>!</code>) don’t get a space before them.
+    </div>
+  </div>
+
+  <script>
+    const inputEl = document.getElementById('jsonInput');
+    const outEl = document.getElementById('output');
+    const errorEl = document.getElementById('errorBox');
+    const renderBtn = document.getElementById('renderBtn');
+    const toggleTipsBtn = document.getElementById('toggleTipsBtn');
+
+    // Starter example
+    const example = [
+      { "original": "Bună", "translation": "Hello" },
+      { "original": "dimineața", "translation": "the morning" },
+      { "original": ",", "translation": "" },
+      { "original": "cum", "translation": "how" },
+      { "original": "te", "translation": "yourself (you)" },
+      { "original": "simți", "translation": "feel (2nd sg.)" },
+      { "original": "azi", "translation": "today" },
+      { "original": "?", "translation": "" }
+    ];
+    inputEl.value = JSON.stringify(example, null, 2);
+
+    const NO_SPACE_BEFORE = /^[\.,!?;:\)\]\}…%]$/;    // punctuation that sticks to previous
+    const NO_SPACE_AFTER  = /^[\(\[\{„“"«]$/;          // opening punctuation that sticks to next
+
+    function clearError() {
+      errorEl.textContent = '';
+      errorEl.classList.remove('show');
+    }
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.classList.add('show');
+    }
+
+    function makeWordSpan(text, translation) {
+      const span = document.createElement('span');
+      span.className = 'word';
+      span.textContent = text;
+      const t = (translation ?? '').trim();
+      if (t) {
+        span.dataset.translation = t;
+        span.title = t; // fallback tooltip
+      }
+      // Mobile: tap toggles tooltip state
+      span.addEventListener('click', (e) => {
+        // Don’t toggle if there’s no translation
+        if (!span.dataset.translation) return;
+        span.classList.toggle('show-tip');
+      });
+      return span;
+    }
+
+    function render() {
+      clearError();
+      outEl.replaceChildren();
+      let data;
+      try {
+        data = JSON.parse(inputEl.value);
+      } catch (e) {
+        showError('Invalid JSON. Please check your commas, quotes, and brackets.');
+        return;
+      }
+      if (!Array.isArray(data)) {
+        showError('Root must be an array of { original, translation } objects.');
+        return;
+      }
+
+      let prevNeedsNoSpaceAfter = false;
+      data.forEach((item, idx) => {
+        if (!item || typeof item.original !== 'string') {
+          return showError(`Item ${idx + 1} is missing "original" (string).`);
+        }
+        if (item.translation !== undefined && typeof item.translation !== 'string') {
+          return showError(`Item ${idx + 1} has "translation" that is not a string.`);
+        }
+
+        const token = item.original;
+        const span = makeWordSpan(token, item.translation);
+
+        // spacing logic
+        const isPunct = NO_SPACE_BEFORE.test(token);
+        const isOpen  = NO_SPACE_AFTER.test(token);
+
+        const needSpace =
+          idx !== 0 && !isPunct && !prevNeedsNoSpaceAfter;
+
+        if (needSpace) outEl.append(' ');
+        outEl.appendChild(span);
+
+        // if current is opening punctuation, suppress next leading space
+        prevNeedsNoSpaceAfter = isOpen;
+      });
+    }
+
+    function toggleAllTips() {
+      const words = outEl.querySelectorAll('.word[data-translation]');
+      const anyOpen = Array.from(words).some(w => w.classList.contains('show-tip'));
+      words.forEach(w => w.classList.toggle('show-tip', !anyOpen));
+    }
+
+    renderBtn.addEventListener('click', render);
+    toggleTipsBtn.addEventListener('click', toggleAllTips);
+
+    // Render once on load
+    render();
+  </script>
+</body>
+</html>
